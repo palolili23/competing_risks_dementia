@@ -20,15 +20,15 @@ source(here::here("02_R", "03b_auxiliary_functions.R"))
 data %<>% 
   mutate(smoke_dic = ifelse(smoke1 == 0, 0, 1))
 
-prop <- expr(round(n/sum(n),2))
-
-count_table <- data %>%
-  group_by(smoke_dic) %>%
-  count(dementia_20) %>%
-  mutate(prop =eval(prop)) %>%
-  filter(dementia_20 == 1)
-
-count_table
+# prop <- expr(round(n/sum(n),2))
+# 
+# count_table <- data %>%
+#   group_by(smoke_dic) %>%
+#   count(dementia_20) %>%
+#   mutate(prop =eval(prop)) %>%
+#   filter(dementia_20 == 1)
+# 
+# count_table
 
 # Weights for smoking --------------------------------------------------
 
@@ -96,9 +96,9 @@ dem_adjusted <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data,
 
 risks_cif(dem_adjusted)
 
-dem_adjusted_plot <-
-  plot_cif(dem_adjusted, title = "Total effect of smoking in the risk of dementia") +
-  labs(subtitle = "With IPTW")
+# dem_adjusted_plot <-
+#   plot_cif(dem_adjusted, title = "Total effect of smoking in the risk of dementia") +
+#   labs(subtitle = "With IPTW")
 
 # 2. Mortality --------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ dem_adjusted_plot <-
 
 death_crude <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data)
 
-death_crude_plot <- plot_cif(death_crude, "Risk of death among ever vs. never smokers")
+# death_crude_plot <- plot_cif(death_crude, "Risk of death among ever vs. never smokers")
 
 risks_cif(death_crude)
 
@@ -118,10 +118,10 @@ death_adjusted <-
   survfit(Surv(t2death_20, as.factor(death_20)) ~ smoke_dic, weights = w_smoke, data)
 
 risks_cif(death_adjusted)
-
-death_adjusted_plot <-
-  plot_cif(death_adjusted, "Total effect of smoking in mortality") +
-  labs(subtitle = "With IPTW")
+ 
+# death_adjusted_plot <-
+#   plot_cif(death_adjusted, "Total effect of smoking in mortality") +
+#   labs(subtitle = "With IPTW")
 
 
 #3. Bootstrap confidence intervals total effect dementia -----------------------------------------

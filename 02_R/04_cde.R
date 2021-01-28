@@ -29,8 +29,8 @@ data_long %<>%
     smoke_baseline
   )
 
-data_long %>% 
-  count(smoke_dic, outcome_plr)
+# data_long %>% 
+#   count(smoke_dic, outcome_plr)
 
 data_long <- data_long %>% 
   group_by(id) %>% 
@@ -124,8 +124,8 @@ km_crude_unconditional <-
     cluster = id
   )
 
-km_crude_unconditional_plot<- plot_km(km_crude_unconditional, "Direct effect") + 
-  labs(subtitle = "Without IPTW, unconditional censoring")
+# km_crude_unconditional_plot<- plot_km(km_crude_unconditional, "Direct effect") + 
+#   labs(subtitle = "Without IPTW, unconditional censoring")
 
 risks_km(km_crude_unconditional)
 
@@ -145,8 +145,8 @@ km_crude_conditional <-
     weights = sw
   )
 
-km_crude_conditional_plot<- plot_km(km_crude_conditional, "Direct effect") + 
-  labs(subtitle = "Without IPTW, conditional on time-varying covariates")
+# km_crude_conditional_plot<- plot_km(km_crude_conditional, "Direct effect") + 
+#   labs(subtitle = "Without IPTW, conditional on time-varying covariates")
 
 risks_km(km_crude_conditional)
 
@@ -167,8 +167,8 @@ km_adjusted_conditional <-
     weights = both_weights
   )
 
-km_adjusted_conditional_plot<- plot_km(km_adjusted_conditional, "Direct effect") + 
-  labs(subtitle = "With IPTW, conditional on time-varying covariates")
+# km_adjusted_conditional_plot<- plot_km(km_adjusted_conditional, "Direct effect") + 
+#   labs(subtitle = "With IPTW, conditional on time-varying covariates")
 
 risks_km(km_adjusted_conditional)
 
