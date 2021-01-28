@@ -8,7 +8,7 @@ mytheme <- theme_minimal(base_family = "serif") +
 
 
 
-risks <- function(model){
+risks_cif <- function(model){
   model %>% 
     broom::tidy() %>%
     filter(state == "1") %>%

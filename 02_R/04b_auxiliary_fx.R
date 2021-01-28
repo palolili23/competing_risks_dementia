@@ -1,9 +1,9 @@
-plot_cif <- function(model, title, ...){
+plot_km <- function(model, title, ...){
   tidy <- model %>% 
     broom::tidy() %>% 
     transmute(
       time = time, 
-      strata = ifelse(strata == "smoke_dic=0", "Non-smoker", "Smoker"),
+      strata = ifelse(strata == "smoke_dic=0", "Ever-smoked", "Never smoked"),
       cif = 1 - estimate,
       conf.low2 = 1- conf.low,
       conf.high2 = 1 - conf.high) %>% 
@@ -27,7 +27,7 @@ plot_cif <- function(model, title, ...){
   
 }
 
-risks <- function(model){
+risks_km <- function(model){
   model %>% 
     broom::tidy() %>%
     group_by(strata) %>% 

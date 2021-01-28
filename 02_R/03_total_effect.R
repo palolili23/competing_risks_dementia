@@ -10,6 +10,7 @@ library(survminer)
 library(patchwork)
 library(WeightIt)
 library(cobalt)
+library(splines)
 
 ## Import data and functions
 
@@ -33,8 +34,7 @@ count_table
 
 smoke_den <-
   glm(
-    smoke_dic ~ bs(age_0) + sex + education + hd_prev + apoe4 + ht1 +
-      bs(sbp1, 3) + bs(bmi1, 3),
+    smoke_dic ~ bs(age_0) + sex + education + apoe4,
     data = data,
     family = binomial
   )
@@ -54,8 +54,7 @@ data <- data %>%
 
 ## Check standardized mean
 
-w.out1 <- weightit(smoke_dic ~ bs(age_0) + sex + education + hd_prev + apoe4 + ht1 +
-                     bs(sbp1, 3) + bs(bmi1,3), data = data, 
+w.out1 <- weightit(smoke_dic ~ bs(age_0) + sex + education + apoe4, data = data, 
                    stabilize = TRUE, estimand = "ATE", method = "ps")
 w.out1
 
@@ -75,113 +74,116 @@ love.plot(w.out1) +
 
 
 
-# DEMENTIA MODEL ----------------------------------------------------------
+# 1. Total effect in dementia risk ----------------------------------------------------------
 
-## Crude model
+
+# 1.1. No adjustment for confounding --------------------------------------
 
 dem_crude <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data)
 
 model <- dem_crude
-risks(dem_crude)
+risks_cif(dem_crude)
 
 dem_crude_plot <- plot_cif(
   dem_crude, "Risk of dementia among ever vs. never smokers") +
   labs(subtitle = "Without elimination of death" )
 
 
-### with weights
 
-dem_weights <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)
+# 1.2. With IPTW for confounding ------------------------------------------
 
-risks(dem_weights)
+dem_adjusted <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)
+
+risks_cif(dem_adjusted)
 
 dem_adjusted_plot <-
-  plot_cif(dem_weights, title = "Total effect of smoking in the risk of dementia") +
+  plot_cif(dem_adjusted, title = "Total effect of smoking in the risk of dementia") +
   labs(subtitle = "With IPTW")
 
-###
+# 2. Mortality --------------------------------------------------------------------
 
-dem_crude_plot + dem_adjusted_plot
-
-# Dead --------------------------------------------------------------------
-
+# 2.1. No adjustment for confounding --------------------------------------
 
 death_crude <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data)
 
 death_crude_plot <- plot_cif(death_crude, "Risk of death among ever vs. never smokers")
 
-risks(death_crude)
+risks_cif(death_crude)
+
+
+# 2.2. With IPTW for confounding ------------------------------------------
+
 
 death_adjusted <-
   survfit(Surv(t2death_20, as.factor(death_20)) ~ smoke_dic, weights = w_smoke, data)
 
-risks(death_adjusted)
+risks_cif(death_adjusted)
+
 death_adjusted_plot <-
   plot_cif(death_adjusted, "Total effect of smoking in mortality") +
   labs(subtitle = "With IPTW")
-
-library(patchwork)
 
 death_crude_plot + death_adjusted_plot
 
 
 
-#  Bootstrap confidence intervals total effect dementia -----------------------------------------
+#3. Bootstrap confidence intervals total effect dementia -----------------------------------------
 
-total_effect_dem <- function(data, weight = FALSE){
-  
-  if(weight != FALSE){
-  smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + hd_prev + apoe4 + ht1 +
-                     bs(sbp1, 3) + bs(bmi1,3), data = data, family = binomial)
-  
-  smoke_num <- glm(smoke_dic ~ 1, data = data)
-  
-  data <- data %>% 
-    mutate(
-      p_num = predict(smoke_num, type = "response"),
-      p_denom = predict(smoke_den, type = "response"),
-      w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
- 
-  dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)}
-  else{
-    dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data)
-  }
-  
-  output <- risks(dem_model)
+# total_effect_dem <- function(data, weight = FALSE){
+#   
+#   if(weight != FALSE){
+#   smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + apoe4, data = data, family = binomial)
+#   
+#   smoke_num <- glm(smoke_dic ~ 1, data = data)
+#   
+#   data <- data %>% 
+#     mutate(
+#       p_num = predict(smoke_num, type = "response"),
+#       p_denom = predict(smoke_den, type = "response"),
+#       w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
+#  
+#   dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)}
+#   else{
+#     dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data)
+#   }
+#   
+#   output <- risks(dem_model)
+# 
+#   return(output)
+#   }
+# 
+# ci_dem_crude <- risks_boots(data, 500, seed = 123, total_effect_dem, weight = FALSE)
+# 
+# 
+# ci_dem_weight <- risks_boots(data, 500, seed = 123, total_effect_dem, weight = TRUE)
+# 
 
-  return(output)
-  }
-
-ci_dem_crude <- risks_boots(data, 500, seed = 123, total_effect_dem, weight = FALSE)
-
-
-ci_dem_weight <- risks_boots(data, 500, seed = 123, total_effect_dem, weight = TRUE)
-
-
-# total_effect_death ------------------------------------------------------
-
-total_effect_death <- function(data, weight = FALSE){
-  
-  if(weight != FALSE){
-    smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + hd_prev + apoe4 + ht1 +
-                       bs(sbp1, 3) + bs(bmi1,3), data = data, family = binomial)
-    smoke_num <- glm(smoke_dic ~ 1, data = data)
-    
-    data <- data %>% 
-      mutate(
-        p_num = predict(smoke_num, type = "response"),
-        p_denom = predict(smoke_den, type = "response"),
-        w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
-    
-    death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data, weights= w_smoke)}
-  else{
-    death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data)
-  }
-  output <- risks(death_model)
-  
-  return(output)
-}
-
-ci_death_crude <- risks_boots(data, 500, seed = 123, total_effect_death, weight = FALSE)
-
-ci_death_weight <- risks_boots(data, 500, seed = 123, total_effect_death, weight = TRUE)
+# 4. Bootstrap confidence intervals death  ------------------------------------------------------
+# 
+# total_effect_death <- function(data, weight = FALSE){
+#   
+#   if(weight != FALSE){
+#     smoke_den <-
+#       glm(smoke_dic ~ bs(age_0) + sex + education + apoe4,
+#           data = data,
+#           family = binomial)
+#     smoke_num <- glm(smoke_dic ~ 1, data = data)
+#     
+#     data <- data %>% 
+#       mutate(
+#         p_num = predict(smoke_num, type = "response"),
+#         p_denom = predict(smoke_den, type = "response"),
+#         w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
+#     
+#     death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data, weights= w_smoke)}
+#   else{
+#     death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data)
+#   }
+#   output <- risks(death_model)
+#   
+#   return(output)
+# }
+# 
+# ci_death_crude <- risks_boots(data, 500, seed = 123, total_effect_death, weight = FALSE)
+# 
+# ci_death_weight <- risks_boots(data, 500, seed = 123, total_effect_death, weight = TRUE)
