@@ -56,7 +56,7 @@ all_models_unadj <- bind_all_models(cif = dem_crude, death = death_crude,
 
 all_models_unadj %>% 
   ggplot(aes(time, cif, group = strata)) +
-  geom_line(aes(color = strata), size = 0.75) +
+  geom_line(aes(color = strata), size = 0.70) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
   scale_color_manual(values = c("#011A5E", "#e4a803")) +
   scale_y_continuous(limits = c(0, 0.70)) +
