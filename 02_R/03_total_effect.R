@@ -123,9 +123,6 @@ death_adjusted_plot <-
   plot_cif(death_adjusted, "Total effect of smoking in mortality") +
   labs(subtitle = "With IPTW")
 
-death_crude_plot + death_adjusted_plot
-
-
 
 #3. Bootstrap confidence intervals total effect dementia -----------------------------------------
 

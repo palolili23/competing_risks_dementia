@@ -1,0 +1,68 @@
+---
+title: DAG competing events in dementia
+output: html_document
+---
+
+
+```{tikz, fig.ext = 'png', echo = FALSE}
+\usetikzlibrary{arrows}
+\begin{tikzpicture}[node distance=3cm, auto,>=latex, scale = 0.5]
+\node (e) {$Smoking$};
+\node [right of = e] (de) {$Death_{80}$};
+\node [right of  = de] (dm) {$Dementia_{80}$};
+\node [below of = de, xshift = 1.5cm, node distance = 1.5cm] (cboth) {$C_{shared}$};
+\draw[->] (e) -- (de);
+\draw[->] (e) to [out=90,in=90, looseness=0.2] (dm);
+\draw[->, violet, very thick] (de) -- (dm);
+\draw[->, dotted] (cboth) -- (de);
+\draw[->, dotted] (cboth) -- (dm);
+\end{tikzpicture}
+```
+
+
+```{tikz, fig.ext = 'png', echo = FALSE}
+\usetikzlibrary{arrows}
+\begin{tikzpicture}[node distance=2cm, auto,>=latex, scale = 0.5]
+\node (l) {$$};
+\node (e) {$Smoking$};
+\node [above of = e, xshift = 4.5cm] (de) {$Death_{80}$};
+\node [below  = e, xshift = 4.5cm] (dm) {$Dementia_{80}$};
+\node [above of = e, xshift = 1cm] (cboth) {$C_{shared}$};
+\draw[->] (e) -- (de);
+\draw[->] (e) -- (dm);
+\draw[->, violet, very thick] (de) -- (dm);
+\draw[->, dotted] (cboth) -- (de);
+\draw[->, dotted] (cboth) -- (dm);
+\end{tikzpicture}
+```
+
+
+
+```{tikz, fig.ext = 'png', echo = FALSE}
+\usetikzlibrary{arrows}
+\begin{tikzpicture}[node distance=2cm, auto,>=latex, scale = 0.5]
+\node (e) {$Smoking$};
+\node [above of = e, xshift = 4.5cm, yshift = -1cm] (de) {$Death_{70}$};
+\node [right of = de, node distance = 3 cm] (de2) {$Death_{80}$};
+\node [below of = e, xshift = 4.5cm, yshift = 1cm] (dm) {$Dementia_{70}$};
+\node [right of = dm, node distance = 3 cm] (dm2) {$Dementia_{80}$};
+\node [above right of = de, node distance = 2 cm] (cdeath) {$C_{death}$};
+\node [below right of = dm, node distance = 2 cm] (cdementia) {$C_{dementia}$};
+\node [below right of = dm, node distance = 2 cm] (cdementia) {$C_{dementia}$};
+\node [above of = e, xshift = 1cm, yshift = -1cm] (cboth) {$C_{shared}$};
+\draw[->] (e) -- (de);
+\draw[->] (e) -- (dm);
+\draw[->, violet, very thick] (de) -- (de2);
+\draw[->, violet, very thick] (dm) -- (dm2);
+\draw[->, violet, very thick] (de) -- (dm);
+\draw[->, violet, very thick] (de2) -- (dm2);
+\draw[->, violet, very thick] (dm) -- (de2);
+\draw[->, dotted] (cboth) -- (de);
+\draw[->, dotted] (cboth) to [out=90,in=90, looseness=0.2] (de2);
+\draw[->, dotted] (cboth) -- (dm);
+\draw[->, dotted] (cboth) -- (dm2);
+\draw[->, dashed] (cdeath) -- (de);
+\draw[->, dashed] (cdeath) -- (de2);
+\draw[->, dashed] (cdementia) -- (dm);
+\draw[->, dashed] (cdementia) -- (dm2);
+\end{tikzpicture}

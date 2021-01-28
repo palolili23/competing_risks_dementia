@@ -34,13 +34,13 @@ tidy_km <- km %>%
   broom::tidy() %>% 
   transmute(
     time = time, 
-    strata = ifelse(strata == "smoke_dic=0", "Ever smoked", "Never smoked"),
+    strata = ifelse(strata == "smoke_dic=0", "Never smoked", "Ever smoked"),
     cif = 1 - estimate,
     conf.low2 = 1- conf.low,
     conf.high2 = 1 - conf.high) %>% 
   rename(conf.high = conf.low2,
          conf.low = conf.high2) %>% 
-  mutate(model = "B. Direct effect on dementia risk")
+  mutate(model = "B. Direct effect on dementia risk") 
 
 output <- bind_rows(tidy_cif, tidy_km, tidy_death)
 
@@ -51,12 +51,12 @@ return(output)
 # all_unadjusted_models ---------------------------------------------------
 
 
-all_models_unadj <- bind_all_models(dem_crude, death_crude, 
+all_models_unadj <- bind_all_models(cif = dem_crude, death = death_crude, 
                               km_crude_conditional)
 
 all_models_unadj %>% 
   ggplot(aes(time, cif, group = strata)) +
-  geom_line(aes(color = strata), size = 0.7) +
+  geom_line(aes(color = strata), size = 0.75) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
   scale_color_manual(values = c("#011A5E", "#e4a803")) +
   scale_y_continuous(limits = c(0, 0.70)) +
@@ -71,8 +71,8 @@ all_models_unadj %>%
 
 # Plots after adjusting for confounding -----------------------------------
 
-all_models <- bind_all_models(dem_adjusted, death_adjusted, 
-                              km_adjusted_conditional)
+all_models <- bind_all_models(cif = dem_adjusted, death = death_adjusted, 
+                              km = km_adjusted_conditional)
 
 all_models %>% 
   ggplot(aes(time, cif, group = strata)) +
