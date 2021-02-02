@@ -96,9 +96,9 @@ dem_adjusted <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data,
 
 risks_cif(dem_adjusted)
 
-# dem_adjusted_plot <-
-#   plot_cif(dem_adjusted, title = "Total effect of smoking in the risk of dementia") +
-#   labs(subtitle = "With IPTW")
+dem_adjusted_plot <-
+  plot_cif(dem_adjusted, title = "Total effect of smoking in the risk of dementia") +
+  labs(subtitle = "With IPTW")
 
 # 2. Mortality --------------------------------------------------------------------
 
@@ -125,26 +125,26 @@ risks_cif(death_adjusted)
 
 
 #3. Bootstrap confidence intervals total effect dementia -----------------------------------------
-
+# 
 # total_effect_dem <- function(data, weight = FALSE){
-#   
+# 
 #   if(weight != FALSE){
 #   smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + apoe4, data = data, family = binomial)
-#   
+# 
 #   smoke_num <- glm(smoke_dic ~ 1, data = data)
-#   
-#   data <- data %>% 
+# 
+#   data <- data %>%
 #     mutate(
 #       p_num = predict(smoke_num, type = "response"),
 #       p_denom = predict(smoke_den, type = "response"),
 #       w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
-#  
+# 
 #   dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)}
 #   else{
 #     dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data)
 #   }
-#   
-#   output <- risks(dem_model)
+# 
+#   output <- risks_cif(dem_model)
 # 
 #   return(output)
 #   }
@@ -153,31 +153,31 @@ risks_cif(death_adjusted)
 # 
 # 
 # ci_dem_weight <- risks_boots(data, 500, seed = 123, total_effect_dem, weight = TRUE)
-# 
+
 
 # 4. Bootstrap confidence intervals death  ------------------------------------------------------
-# 
+
 # total_effect_death <- function(data, weight = FALSE){
-#   
+# 
 #   if(weight != FALSE){
 #     smoke_den <-
 #       glm(smoke_dic ~ bs(age_0) + sex + education + apoe4,
 #           data = data,
 #           family = binomial)
 #     smoke_num <- glm(smoke_dic ~ 1, data = data)
-#     
-#     data <- data %>% 
+# 
+#     data <- data %>%
 #       mutate(
 #         p_num = predict(smoke_num, type = "response"),
 #         p_denom = predict(smoke_den, type = "response"),
 #         w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
-#     
+# 
 #     death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data, weights= w_smoke)}
 #   else{
 #     death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data)
 #   }
-#   output <- risks(death_model)
-#   
+#   output <- risks_cif(death_model)
+# 
 #   return(output)
 # }
 # 
