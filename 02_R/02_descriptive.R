@@ -1,3 +1,4 @@
+library(kableExtra)
 mytablestyle <- function(df){
   kable(df) %>% 
     kable_styling(bootstrap_options = c("hover", "condensed", "responsive"),
@@ -12,21 +13,31 @@ data %<>%
   mutate(smoke_dic = ifelse(smoke1 == 0, 0, 1))
 
 data %>% 
-count(smoke_dic)
-
-counts <- data %>% 
-  group_by(smoke_dic) %>% 
-  count(dementia) %>% 
+count(smoke_dic) %>% 
   mutate(prop = round(100*n/sum(n),1),
          total = paste0(n," (", prop, "%)"))
 
-counts
-data %>% count(dementia)         
+data %>% count(dementia_20) %>% 
+  mutate(prop = round(100*n/sum(n),1),
+         total = paste0(n," (", prop, "%)"))
+
+
+counts <- data %>% 
+  group_by(smoke_dic) %>% 
+  count(dementia_20) %>% 
+  mutate(prop = round(100*n/sum(n),1),
+         total = paste0(n," (", prop, "%)"))
+
+counts %>% 
+  filter(dementia_20 != 0) %>% 
+  select(-n, -prop)
+
 
 data %>% group_by(dementia) %>% 
-  summarise(median = median(t2dem_y),
-            death = median(t2death_y))
+  summarise(dementia_median = median(t2dem_20/12),
+            death_median = median(t2death_20/12))
 
+data 
 ### Table 1
 data_table1 <- data %>%
   select(age_0, sex, education, apoe4, smoke_dic, sbp1, ht1, bmi1, mmse1, 
@@ -50,7 +61,8 @@ table <-
   print(CreateTableOne(
     data = data_table1,
     factorVars = categorical,
-    strata = "smoke_dic", test = FALSE
+    # strata = "smoke_dic", 
+    test = FALSE
   ))
 
 table_print <-
