@@ -90,7 +90,7 @@ data <- data %>%
     t2dem_y = ifelse((is.na(dementia_date) |dementia_date > end_fup_2015), t2death_y, t2dem_y),
     t2dem_d = ifelse((is.na(dementia_date) |dementia_date > end_fup_2015), t2death_d, t2dem_d),
   ) %>% 
-  filter(round(t2death_y,0) > 1)
+  filter(round(t2death_y,0) >= 1)
 
 
 ### Missing data
@@ -146,7 +146,7 @@ data_long <- data %>%
   filter(t2death>= 1) %>%
   mutate(t2death_y = round(t2death_y,0)) %>% 
   group_by(id) %>% 
-  slice(rep(1:n(), each = (21))) %>% #repeat rows by #years until death + 1 since rounding will count some as one year before year of outcome
+  slice(rep(1:n(), each = (22))) %>% #repeat rows by #years until death + 1 since rounding will count some as one year before year of outcome
   ungroup() %>%
   select(everything(), - matches("[1,2,3,4,5]$"), death_2015, end_fup_2015, apoe4) %>% ## delete all covariates
   group_by(id) %>%
@@ -263,7 +263,7 @@ data_long_dem <- data_long %>%
                                      as.numeric(year(end_fup_2015))),
          time = row_number()) %>%
   filter(year <= end_dementia_death,
-         time <= 20) %>%
+         time <= 21) %>%
   ungroup() %>% 
   select(id, year, time, end_dementia_death, everything())
 
@@ -281,10 +281,11 @@ data_long_dem %>%
 data %>% count(dementia_20)
 
 ####
-dem_a <- data_long_dem %>% filter(outcome_plr == 1) %>% pull(id)
-dem_b <- data %>% filter(dementia_20 == 1) %>% pull(id)
+dem_a <- data_long_dem %>% filter(competing_plr == 1) %>% pull(id)
+dem_b <- data %>% filter(dementia_20 == 2) %>% pull(id)
 
-dif <- setdiff(dem_b, dem_a)
+dif_ba <- setdiff(dem_b, dem_a)
+dif_ab <- setdiff(dem_a, dem_b)
 
 data %>% filter(id %in% dif) %>% View()
 
