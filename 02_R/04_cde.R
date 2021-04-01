@@ -21,8 +21,9 @@ data_long %>%
 data <- import(here::here("01_data", "wide_noltfu.RData"))
 
 smoke_baseline <- data %>% 
-  mutate(smoke_dic = ifelse(smoke1 == 0, 0, 1)) %>% 
-  select(id, smoke_dic, sbp1, bmi1, ht1)
+  mutate(smoke_dic = ifelse(smoke1 == 2, 1, 0)) %>% 
+  select(id, smoke_dic, sbp1, bmi1, ht1, cohort)
+
 ### 
 data_long %<>%
   left_join(
@@ -43,8 +44,15 @@ data_long <- data_long %>%
 source(here::here("02_R", "04b_auxiliary_fx.R"))
 # Weights -----------------------------------------------------------------
 
-smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + apoe4, 
-              data = data_long, family = quasibinomial)
+
+smoke_den <-
+  glm(
+    smoke_dic ~ bs(age_0, 3) + sex + education + apoe4 + cohort + ht1 +
+      bs(sbp1,3) + bs(bmi1, 3) + as.factor(diabetes_prev),
+    data = data_long,
+    family = binomial
+  )
+
 
 summary(smoke_den)
 
@@ -82,15 +90,27 @@ data_long <- data_long %>%
 
 # Weights for death -------------------------------------------------------
 
-death_den <- glm(competing_plr ~ smoke_dic*bs(time,3) + bs(age_0,3) + sex + education + apoe4 + 
-                   bs(sbp,3) + bs(bmi,3 ) + hd_v + cancer_v + 
-                   stroke_v + diab_v, data = data_long, family = quasibinomial)
+death_den <-
+  glm(
+    competing_plr ~ smoke_dic * bs(time, 3) + bs(age_0, 3) + sex + education + apoe4 + 
+     as.factor(diabetes_prev) + bs(sbp1, 3) + bs(bmi1, 3) + ht1 + cohort + 
+      bs(sbp, 3) + bs(bmi, 3) + hd_v + cancer_v + stroke_v + diab_v,
+    data = data_long,
+    family = quasibinomial
+  )
 
 summary(death_den)
 
-death_den %>% broom::tidy()
+death_den %>% broom::tidy(exponentiate = TRUE) %>% View()
 
-death_num <- glm(competing_plr ~ 1, data = data_long, family = binomial)
+
+death_num <-
+  glm(
+    competing_plr ~ smoke_dic * bs(time, 3) + bs(age_0, 3) + sex + education + apoe4 +
+      as.factor(diabetes_prev) + bs(sbp1, 3) + bs(bmi1, 3) + ht1 + cohort,
+    data = data_long,
+    family = binomial
+  )
 
 data_long$p_denom = predict(death_den, data_long, type = "response")
 
