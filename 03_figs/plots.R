@@ -17,29 +17,33 @@ bind_all_models <- function(cif, death, km) {
     bind_rows(time_zero) %>% 
     mutate(strata = ifelse(strata == "smoke_dic=0", 
                            "Non-smokers", "Smokers")) %>%
+    arrange(strata, time) %>%
+    complete(strata, time) %>%
+    group_by(strata) %>%
+    fill(cif, conf.high, conf.low) %>% 
     filter((strata == "Non-smokers" &
               time %in% c(seq(0, 240, 12))) |
              (strata == "Smokers" &
                 time %in% c(seq(0, 240, 12)))) %>%
-    arrange(strata, time) %>%
-    group_by(strata) %>%
     mutate(time = row_number() - 1,
            model = "A. Total effect on dementia risk") %>% ungroup()
 
-tidy_death <- death %>%
+  tidy_death <- death %>%
     broom::tidy() %>%
     filter(state == "1") %>%
     select(time, strata, estimate, conf.high, conf.low) %>%
     rename(cif = estimate) %>%
-    bind_rows(time_zero) %>% 
+    bind_rows(time_zero) %>%
     mutate(strata = ifelse(strata == "smoke_dic=0",
                            "Non-smokers", "Smokers")) %>%
+    arrange(strata, time) %>%
+    complete(strata, time) %>%
+    group_by(strata) %>%
+    fill(cif, conf.high, conf.low) %>% 
     filter((strata == "Non-smokers" &
               time %in% c(seq(0, 240, 12))) |
              (strata == "Smokers" &
                 time %in% c(seq(0, 240, 12)))) %>%
-    arrange(strata, time) %>%
-    group_by(strata) %>%
     mutate(time = row_number() - 1,
            model = "C. Effect on mortality") %>% ungroup()
   
@@ -100,13 +104,13 @@ plot_unadj <- all_models_unadj %>%
         strip.background = element_rect(fill=NA),
         axis.text=element_text(size=12),
         axis.title=element_text(size=12))
-
-ggsave(filename = "plot_unadjusted.tiff", 
-       plot = plot_unadj, 
-       path = here::here("03_figs"),
-       device = "tiff",
-       width = 8,
-       dpi = "retina")
+# 
+# ggsave(filename = "plot_unadjusted.tiff", 
+#        plot = plot_unadj, 
+#        path = here::here("03_figs"),
+#        device = "tiff",
+#        width = 8,
+#        dpi = "retina")
 
 # Plots after adjusting for confounding -----------------------------------
 
@@ -134,11 +138,13 @@ plot_adjusted <- all_models %>%
         strip.background = element_rect(fill=NA),
         axis.text=element_text(size=12),
         axis.title=element_text(size=12))
+# 
+# ggsave(filename = "plot_adjusted.tiff", 
+#        plot = plot_adjusted, 
+#        path = here::here("03_figs"),
+#        device = "tiff",
+#        width = 8,
+#        dpi = "retina")
 
-ggsave(filename = "plot_adjusted.tiff", 
-       plot = plot_adjusted, 
-       path = here::here("03_figs"),
-       device = "tiff",
-       width = 8,
-       dpi = "retina")
-
+plot_unadj
+plot_adjusted
