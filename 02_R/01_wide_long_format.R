@@ -8,7 +8,7 @@ library(zoo)
 # Import first cohort -----------------------------------------------------
 
 data <- import(here::here("01_data", "db_wide.RData")) %>% 
-  filter(rs_cohort == 1) %>% 
+  filter(rs_cohort != 3) %>% 
   select(-education_three_levels)
 
 educ <- import(here::here("01_data", "educ.Rdata")) %>% 
@@ -20,7 +20,7 @@ data <- data %>%
 
 data <- data %>%  
   filter(!is.na(e1)) %>% 
-  filter(age_0 <= 80) %>% 
+  filter(age_0 <= 70) %>% 
   # filter(mmse1 >= 26) %>% 
   filter(dementia_inc != 2) %>% 
   filter(!is.na(sbp1)) %>%
@@ -29,6 +29,7 @@ data <- data %>%
   # filter(!is.na(ht_drug1)) %>% 
   filter(!is.na(censor_date)) %>% 
   # filter(!is.na(education)) %>% 
+  # filter(smoke1 != 0) %>%
   rename(id = ergoid, cohort = rs_cohort) 
 
 rm(educ)
@@ -109,7 +110,8 @@ data %<>%
     education = ifelse(is.na(education), "Unknown", education),
     apoe4 = ifelse(is.na(apoe4),"Unknown" , apoe4),
     ht_drug1 = ifelse(is.na(ht_drug1), 2, ht_drug1),
-    hd_prev = ifelse(is.na(hd_prev), 2, hd_prev),)
+    hd_prev = ifelse(is.na(hd_prev), 2, hd_prev),
+    diabetes_prev = ifelse(is.na(diabetes_prev), 2, diabetes_prev))
 
 
 
