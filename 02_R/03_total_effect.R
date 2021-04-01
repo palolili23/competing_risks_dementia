@@ -18,7 +18,7 @@ data <- import(here::here("01_data", "wide_noltfu.RData"))
 source(here::here("02_R", "03b_auxiliary_functions.R"))
 
 data %<>% 
-  mutate(smoke_dic = ifelse(smoke1 == 0, 0, 1))
+  mutate(smoke_dic = ifelse(smoke1 == 2, 1, 0))
 
 # prop <- expr(round(n/sum(n),2))
 # 
@@ -34,7 +34,8 @@ data %<>%
 
 smoke_den <-
   glm(
-    smoke_dic ~ bs(age_0) + sex + education + apoe4,
+    smoke_dic ~ bs(age_0, 3) + sex + education + apoe4 + cohort + ht1 +
+      bs(sbp1,3) + bs(bmi1, 3) + as.factor(diabetes_prev),
     data = data,
     family = binomial
   )
@@ -54,8 +55,16 @@ data <- data %>%
 
 ## Check standardized mean
 
-w.out1 <- weightit(smoke_dic ~ bs(age_0) + sex + education + apoe4, data = data, 
-                   stabilize = TRUE, estimand = "ATE", method = "ps")
+w.out1 <-
+  weightit(
+    smoke_dic ~ bs(age_0, 3) + sex + education + apoe4 + cohort + ht1 +
+      bs(sbp1,3) + bs(bmi1, 3) + as.factor(diabetes_prev),
+    data = data,
+    stabilize = TRUE,
+    estimand = "ATE",
+    method = "ps"
+  )
+
 w.out1
 
 data <- data %>% 
