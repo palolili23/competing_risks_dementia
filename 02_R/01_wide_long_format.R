@@ -23,13 +23,13 @@ data <- data %>%
   filter(age_0 <= 70) %>% 
   # filter(mmse1 >= 26) %>% 
   filter(dementia_inc != 2) %>% 
+  filter(!is.na(censor_date)) %>%
+  filter(!is.na(smoke1)) %>%
   filter(!is.na(sbp1)) %>%
   filter(!is.na(bmi1)) %>%
-  filter(!is.na(smoke1)) %>% 
   # filter(!is.na(ht_drug1)) %>% 
-  filter(!is.na(censor_date)) %>% 
   # filter(!is.na(education)) %>% 
-  # filter(smoke1 != 0) %>%
+  filter(smoke1 != 0) %>%
   rename(id = ergoid, cohort = rs_cohort) 
 
 rm(educ)
