@@ -104,13 +104,13 @@ plot_unadj <- all_models_unadj %>%
         strip.background = element_rect(fill=NA),
         axis.text=element_text(size=12),
         axis.title=element_text(size=12))
-# 
-# ggsave(filename = "plot_unadjusted.tiff", 
-#        plot = plot_unadj, 
-#        path = here::here("03_figs"),
-#        device = "tiff",
-#        width = 8,
-#        dpi = "retina")
+
+ggsave(filename = "plot_unadjusted_ever_never.tiff",
+       plot = plot_unadj,
+       path = here::here("03_figs"),
+       device = "tiff",
+       width = 8,
+       dpi = "retina")
 
 # Plots after adjusting for confounding -----------------------------------
 
@@ -138,13 +138,13 @@ plot_adjusted <- all_models %>%
         strip.background = element_rect(fill=NA),
         axis.text=element_text(size=12),
         axis.title=element_text(size=12))
-# 
-# ggsave(filename = "plot_adjusted.tiff", 
-#        plot = plot_adjusted, 
-#        path = here::here("03_figs"),
-#        device = "tiff",
-#        width = 8,
-#        dpi = "retina")
 
-plot_unadj
+ggsave(filename = "plot_adjusted_ever_never.tiff",
+       plot = plot_adjusted,
+       path = here::here("03_figs"),
+       device = "tiff",
+       width = 8,
+       dpi = "retina")
+
 plot_adjusted
+plot_unadj
