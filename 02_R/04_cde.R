@@ -21,7 +21,7 @@ data_long %>%
 data <- import(here::here("01_data", "wide_noltfu.RData"))
 
 smoke_baseline <- data %>% 
-  mutate(smoke_dic = ifelse(smoke1 == 2, 1, 0)) %>% 
+  mutate(smoke_dic = ifelse(smoke1 == 1, 0, 1)) %>% 
   select(id, smoke_dic, sbp1, bmi1, ht1, cohort)
 
 ### 
@@ -47,8 +47,7 @@ source(here::here("02_R", "04b_auxiliary_fx.R"))
 
 smoke_den <-
   glm(
-    smoke_dic ~ bs(age_0, 3) + sex + education + apoe4 + cohort + ht1 +
-      bs(sbp1,3) + bs(bmi1, 3) + as.factor(diabetes_prev),
+    smoke_dic ~ bs(age_0, 3) + sex + education + apoe4 + cohort,
     data = data_long,
     family = binomial
   )
