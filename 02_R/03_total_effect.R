@@ -17,17 +17,17 @@ library(splines)
 data <- import(here::here("01_data", "wide_noltfu.RData"))
 source(here::here("02_R", "03b_auxiliary_functions.R"))
 
-data %<>% 
+data %<>%
   mutate(smoke_dic = ifelse(smoke1 == 1, 0, 1))
 
 # prop <- expr(round(n/sum(n),2))
-# 
+#
 # count_table <- data %>%
 #   group_by(smoke_dic) %>%
 #   count(dementia_20) %>%
 #   mutate(prop =eval(prop)) %>%
 #   filter(dementia_20 == 1)
-# 
+#
 # count_table
 
 ## + ht1 + bs(sbp1,3) + bs(bmi1, 3) + as.factor(diabetes_prev)
@@ -47,11 +47,12 @@ smoke_num <- glm(smoke_dic ~ 1, data = data)
 
 summary(smoke_num)
 
-data <- data %>% 
+data <- data %>%
   mutate(
     p_num = predict(smoke_num, type = "response"),
     p_denom = predict(smoke_den, type = "response"),
-    w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
+    w_smoke = ifelse(smoke_dic == 1, p_num / p_denom, (1 - p_num) / (1 - p_denom))
+  )
 
 
 ## Check standardized mean
@@ -67,10 +68,10 @@ w.out1 <-
 
 w.out1
 
-data <- data %>% 
+data <- data %>%
   mutate(ps_w = w.out1$weights)
 
-data %>% 
+data %>%
   ggplot(aes(ps_w, w_smoke, color = smoke_dic)) +
   geom_point()
 
@@ -88,20 +89,22 @@ love.plot(w.out1) +
 
 # 1.1. No adjustment for confounding --------------------------------------
 
-dem_crude <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data)
+dem_crude <-
+  survfit(Surv(t2dem_20, as.factor(dementia_20)) ~ smoke_dic, data)
 
 model <- dem_crude
+
 risks_cif(dem_crude)
 
-dem_crude_plot <- plot_cif(
-  dem_crude, "Risk of dementia among ever vs. never smokers") +
-  labs(subtitle = "Without elimination of death" )
+dem_crude_plot <- plot_cif(dem_crude, "Risk of dementia among ever vs. never smokers") +
+  labs(subtitle = "Without elimination of death")
 
 
 
 # 1.2. With IPTW for confounding ------------------------------------------
 
-dem_adjusted <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)
+dem_adjusted <-
+  survfit(Surv(t2dem_20, as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)
 
 risks_cif(dem_adjusted)
 
@@ -113,7 +116,8 @@ dem_adjusted_plot <-
 
 # 2.1. No adjustment for confounding --------------------------------------
 
-death_crude <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data)
+death_crude <-
+  survfit(Surv(t2death_20, as.factor(death_20)) ~ smoke_dic, data)
 
 # death_crude_plot <- plot_cif(death_crude, "Risk of death among ever vs. never smokers")
 
@@ -127,18 +131,18 @@ death_adjusted <-
   survfit(Surv(t2death_20, as.factor(death_20)) ~ smoke_dic, weights = w_smoke, data)
 
 risks_cif(death_adjusted)
- 
+
 # death_adjusted_plot <-
 #   plot_cif(death_adjusted, "Total effect of smoking in mortality") +
 #   labs(subtitle = "With IPTW")
 
 
 #3. Bootstrap confidence intervals total effect dementia -----------------------------------------
-# 
+
 # total_effect_dem <- function(data, weight = FALSE){
 # 
 #   if(weight != FALSE){
-#   smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + apoe4, data = data, family = binomial)
+#   smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + apoe4 + cohort, data = data, family = binomial)
 # 
 #   smoke_num <- glm(smoke_dic ~ 1, data = data)
 # 
@@ -170,7 +174,7 @@ risks_cif(death_adjusted)
 # 
 #   if(weight != FALSE){
 #     smoke_den <-
-#       glm(smoke_dic ~ bs(age_0) + sex + education + apoe4,
+#       glm(smoke_dic ~ bs(age_0) + sex + education + apoe4 + cohort,
 #           data = data,
 #           family = binomial)
 #     smoke_num <- glm(smoke_dic ~ 1, data = data)
