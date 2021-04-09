@@ -10,7 +10,7 @@ mytablestyle <- function(df){
 data <- import(here::here("01_data", "wide_noltfu.RData"))
 
 data %<>% 
-  mutate(smoke_dic = ifelse(smoke1 == 0, 0, 1))
+  mutate(smoke_dic = ifelse(smoke1 == 1, 0, 1))
 
 data %>% 
 count(smoke_dic) %>% 
@@ -61,7 +61,7 @@ table <-
   print(CreateTableOne(
     data = data_table1,
     factorVars = categorical,
-    # strata = "smoke_dic", 
+    strata = "smoke_dic",
     test = FALSE
   ))
 
