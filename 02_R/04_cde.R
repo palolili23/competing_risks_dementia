@@ -18,22 +18,24 @@ data_long <- import(here::here("01_data", "dementia_long.RData"))
 data_long %>% 
   count(outcome_plr)
 
+## If competing_plr = 1, then outcome_plr = NA
+
+data_long %<>% 
+  mutate(outcome_plr = ifelse(competing_plr == 1, NA, outcome_plr))
+
+## Add baseline data
 data <- import(here::here("01_data", "wide_noltfu.RData"))
 
 smoke_baseline <- data %>% 
   mutate(smoke_dic = ifelse(smoke1 == 1, 0, 1)) %>% 
   select(id, smoke_dic, sbp1, bmi1, ht1, cohort)
 
-### 
 data_long %<>%
   left_join(
     smoke_baseline
   )
 
-# data_long %>% 
-#   count(smoke_dic, outcome_plr)
-
-data_long <- data_long %>% 
+data_long %<>% 
   group_by(id) %>% 
   mutate(
     fuptime = time - 1,
@@ -42,6 +44,7 @@ data_long <- data_long %>%
   ungroup()
 
 source(here::here("02_R", "04b_auxiliary_fx.R"))
+
 # Weights -----------------------------------------------------------------
 
 
@@ -193,7 +196,7 @@ risks_km(km_adjusted_conditional)
 
 # Bootstrap function ------------------------------------------------------
 
-
+# 
 # cde_dem <- function(data_long, iptw = FALSE) {
 #   death_den <-
 #     glm(
@@ -203,37 +206,37 @@ risks_km(km_adjusted_conditional)
 #       data = data_long,
 #       family = quasibinomial
 #     )
-#   
+# 
 #   death_num <-
 #     glm(
 #       competing_plr ~ smoke_dic * bs(time, 3) + bs(age_0, 3) + sex + education + apoe4 + cohort,
 #       data = data_long,
 #       family = quasibinomial
 #     )
-#   
+# 
 #   data_long$p_denom = predict(death_den, data_long, type = "response")
-#   
+# 
 #   data_long$p_num = predict(death_num, data_long, type = "response")
-#   
+# 
 #   data_long %<>%
 #     group_by(id) %>%
 #     mutate(sw = cumprod(1 - p_num) / cumprod(1 - p_denom),
-#     ) %>% 
+#     ) %>%
 #     ungroup()
-#   
+# 
 #   data_long <- data_long %>%
 #     mutate(sw = ifelse((
 #       sw > quantile(sw, 0.99)
 #     ), quantile(sw, 0.99), sw))
-#   
+# 
 #   if (iptw != FALSE) {
 #     smoke_den <-
 #       glm(smoke_dic ~ bs(age_0) + sex + education + apoe4 + cohort,
 #           data = data_long,
 #           family = binomial)
-#     
+# 
 #     smoke_num <- glm(smoke_dic ~ 1, data = data_long)
-#     
+# 
 #     data_long <- data_long %>%
 #       mutate(
 #         pa_num = predict(smoke_num, type = "response"),
@@ -241,11 +244,11 @@ risks_km(km_adjusted_conditional)
 #         w_smoke = ifelse(smoke_dic == 1, pa_num / pa_denom, (1 - pa_num) /
 #                            (1 - pa_denom))
 #       )
-#     
+# 
 #     data_long %<>%
 #       mutate(both_weights = sw * w_smoke)
-#     
-#     
+# 
+# 
 #     dem_model <-
 #       survfit(
 #         Surv(tstart, fuptime, outcome_plr) ~ smoke_dic,
@@ -263,9 +266,9 @@ risks_km(km_adjusted_conditional)
 #         weights = sw
 #       )
 #   }
-#   
+# 
 #   output <- risks_km(dem_model)
-#   
+# 
 #   return(output)
 # }
 # 
@@ -274,6 +277,6 @@ risks_km(km_adjusted_conditional)
 # Bootstrap ---------------------------------------------------------------
 # 
 # cde_unadjusted <- risks_boot_long(data_long, n = 500, seed = 123, iptw = FALSE)
-# 
+#
 # cde_adjusted <- risks_boot_long(data_long, n = 500, seed = 123, iptw = TRUE)
 
