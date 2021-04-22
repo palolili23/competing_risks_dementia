@@ -20,18 +20,6 @@ source(here::here("02_R", "03b_auxiliary_functions.R"))
 data %<>%
   mutate(smoke_dic = ifelse(smoke1 == 1, 0, 1))
 
-# prop <- expr(round(n/sum(n),2))
-#
-# count_table <- data %>%
-#   group_by(smoke_dic) %>%
-#   count(dementia_20) %>%
-#   mutate(prop =eval(prop)) %>%
-#   filter(dementia_20 == 1)
-#
-# count_table
-
-## + ht1 + bs(sbp1,3) + bs(bmi1, 3) + as.factor(diabetes_prev)
-
 # Weights for smoking --------------------------------------------------
 
 smoke_den <-
