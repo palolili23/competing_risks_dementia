@@ -65,11 +65,25 @@ data %>%
 
 summary(data$w_smoke)
 
-love.plot(w.out1) +
-  theme_minimal() +
-  theme(legend.position = "bottom") +
-  scale_color_manual(values = c("#011A5E", "#e4a803"))
-
+# plot_weights <- love.plot(w.out1) +
+#   scale_color_manual(values = c("#011A5E", "#e4a803")) +
+#   labs(title = "Covariate balance for current vs. former smoking") +
+#   theme_bw(base_family = "serif") +
+#   theme(legend.position = "bottom",
+#         legend.text = element_text(size=12)) +
+#   theme(strip.text.x = element_text(size = 11),
+#         # strip.background = element_blank(),
+#         strip.background = element_rect(fill=NA),
+#         axis.text=element_text(size=12),
+#         axis.title=element_text(size=12))
+# 
+# ggsave(filename = "loveplot_smoking.tiff",
+#        plot = plot_weights,
+#        path = here::here("03_figs"),
+#        device = "tiff",
+#        width = 8,
+#        height = 8.1,
+#        dpi = "retina")
 
 
 # 1. Total effect in dementia risk ----------------------------------------------------------
