@@ -15,7 +15,7 @@ bind_all_models <- function(cif, death, km) {
   
   tidy_cif %<>%
     bind_rows(time_zero) %>% 
-    mutate(strata = ifelse(strata == "smoke_dic=0", 
+    mutate(strata = ifelse(strata == "smoke_dic=1", 
                            "Former smokers", "Current smokers")) %>%
     arrange(strata, time) %>%
     complete(strata, time) %>%
@@ -34,7 +34,7 @@ bind_all_models <- function(cif, death, km) {
     select(time, strata, estimate, conf.high, conf.low) %>%
     rename(cif = estimate) %>%
     bind_rows(time_zero) %>%
-    mutate(strata = ifelse(strata == "smoke_dic=0",
+    mutate(strata = ifelse(strata == "smoke_dic=1",
                            "Former smokers", "Current smokers")) %>%
     arrange(strata, time) %>%
     complete(strata, time) %>%
@@ -59,7 +59,7 @@ bind_all_models <- function(cif, death, km) {
     rename(conf.high = conf.low2,
            conf.low = conf.high2) %>%
     mutate(
-      strata = ifelse(strata == "smoke_dic=0",
+      strata = ifelse(strata == "smoke_dic=1",
                       "Former smokers", "Current smokers")) %>% 
     mutate(model = "B. Direct effect on dementia risk")
   
