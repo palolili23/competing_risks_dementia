@@ -16,14 +16,14 @@ bind_all_models <- function(cif, death, km) {
   tidy_cif %<>%
     bind_rows(time_zero) %>% 
     mutate(strata = ifelse(strata == "smoke_dic=1", 
-                           "Former smokers", "Current smokers")) %>%
+                           "Quit smoking", "Continued smoking")) %>%
     arrange(strata, time) %>%
     complete(strata, time) %>%
     group_by(strata) %>%
     fill(cif, conf.high, conf.low) %>% 
-    filter((strata == "Former smokers" &
+    filter((strata == "Quit smoking" &
               time %in% c(seq(0, 240, 12))) |
-             (strata == "Current smokers" &
+             (strata == "Continued smoking" &
                 time %in% c(seq(0, 240, 12)))) %>%
     mutate(time = row_number() - 1,
            model = "A. Total effect on dementia risk") %>% ungroup()
@@ -35,14 +35,14 @@ bind_all_models <- function(cif, death, km) {
     rename(cif = estimate) %>%
     bind_rows(time_zero) %>%
     mutate(strata = ifelse(strata == "smoke_dic=1",
-                           "Former smokers", "Current smokers")) %>%
+                           "Quit smoking", "Continued smoking")) %>%
     arrange(strata, time) %>%
     complete(strata, time) %>%
     group_by(strata) %>%
     fill(cif, conf.high, conf.low) %>% 
-    filter((strata == "Former smokers" &
+    filter((strata == "Quit smoking" &
               time %in% c(seq(0, 240, 12))) |
-             (strata == "Current smokers" &
+             (strata == "Continued smoking" &
                 time %in% c(seq(0, 240, 12)))) %>%
     mutate(time = row_number() - 1,
            model = "C. Effect on mortality") %>% ungroup()
@@ -60,7 +60,7 @@ bind_all_models <- function(cif, death, km) {
            conf.low = conf.high2) %>%
     mutate(
       strata = ifelse(strata == "smoke_dic=1",
-                      "Former smokers", "Current smokers")) %>% 
+                      "Quit smoking", "Continued smoking")) %>% 
     mutate(model = "B. Direct effect on dementia risk")
   
   output <- bind_rows(tidy_cif, tidy_km, tidy_death)
