@@ -94,10 +94,6 @@ model <- dem_crude
 
 risks_cif(dem_crude)
 
-dem_crude_plot <- plot_cif(dem_crude, "Risk of dementia among ever vs. never smokers") +
-  labs(subtitle = "Without elimination of death")
-
-
 
 # 1.2. With IPTW for confounding ------------------------------------------
 
@@ -117,8 +113,6 @@ dem_adjusted_plot <-
 death_crude <-
   survfit(Surv(t2death_20, as.factor(death_20)) ~ smoke_dic, data)
 
-# death_crude_plot <- plot_cif(death_crude, "Risk of death among ever vs. never smokers")
-
 risks_cif(death_crude)
 
 
@@ -129,11 +123,6 @@ death_adjusted <-
   survfit(Surv(t2death_20, as.factor(death_20)) ~ smoke_dic, weights = w_smoke, data)
 
 risks_cif(death_adjusted)
-
-# death_adjusted_plot <-
-#   plot_cif(death_adjusted, "Total effect of smoking in mortality") +
-#   labs(subtitle = "With IPTW")
-
 
 #3. Bootstrap confidence intervals total effect dementia -----------------------------------------
 

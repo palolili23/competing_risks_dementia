@@ -3,7 +3,8 @@ plot_km <- function(model, title, ...){
     broom::tidy() %>% 
     transmute(
       time = time, 
-      strata = ifelse(strata == "smoke_dic=0", "Never smoked", "Ever smoked"),
+      strata = ifelse(strata == "smoke_dic=1", 
+                             "Quit smoking", "Continued smoking"),
       cif = 1 - estimate,
       conf.low2 = 1- conf.low,
       conf.high2 = 1 - conf.high) %>% 

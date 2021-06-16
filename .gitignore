@@ -36,11 +36,10 @@ vignettes/*.pdf
 *.jpeg
 *.log
 
-02_R/01_wide_long_format.R
 02_R/01b_wide_long_format_months.R
-02_R/02_descriptive.R
 02_R/table_one.html
 
+cr_systematicreview/
 
 # knitr and R markdown default cache directories
 *_cache/
