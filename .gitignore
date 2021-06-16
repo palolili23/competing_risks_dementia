@@ -40,6 +40,8 @@ vignettes/*.pdf
 02_R/table_one.html
 
 cr_systematicreview/
+04_manuscript/
+05_ref/
 
 # knitr and R markdown default cache directories
 *_cache/
