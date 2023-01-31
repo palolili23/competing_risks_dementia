@@ -1,4 +1,4 @@
-#### Total effect
+#### Direct effect
 library(rio)
 library(lubridate)
 library(tidyverse)
@@ -42,8 +42,7 @@ data_long %<>%
 
 source(here::here("02_R", "04b_auxiliary_fx.R"))
 
-# Weights -----------------------------------------------------------------
-
+# Weights smoke-----------------------------------------------------------------
 
 smoke_den <-
   glm(
@@ -52,42 +51,45 @@ smoke_den <-
     family = binomial
   )
 
-
-summary(smoke_den)
-
-smoke_num <- glm(smoke_dic ~ 1, data = data_long, family = quasibinomial)
-
-# summary(smoke_num)
-
 data_long <- data_long %>% 
   mutate(
-    p_num = predict(smoke_num, type = "response"),
     p_denom = predict(smoke_den, type = "response"),
-    w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
+    w_smoke = ifelse(smoke_dic == 1, 1/p_denom, 1/(1- p_denom)))
 
-## Check standardized mean
-
-# w.out1 <- weightit(smoke_dic ~ age_0 + I(age_0^2) + sex + education + hd_prev + ht1 + apoe4 + 
-#                      sbp1 + I(sbp1^2)+ bmi1 + I(bmi1^2), data = data_long, 
-#                    stabilize = TRUE, estimand = "ATE", method = "ps")
-# w.out1
-# 
-# data_long <- data_long %>% 
-#   mutate(ps_w = w.out1$weights)
-# 
-# data_long %>% 
-#   ggplot(aes(ps_w, w_smoke, color = smoke_dic)) +
-#   geom_point()
-# 
-# summary(data$w_smoke)
-# 
-# love.plot(w.out1) +
-#   theme_minimal() +
-#   theme(legend.position = "bottom") +
-#   scale_color_manual(values = c("#011A5E", "#e4a803"))
+summary(data_long$w_smoke)
 
 
 # Weights for death -------------------------------------------------------
+
+### baseline_weights --------------------------------------------------------
+
+death_den_bl <-
+  glm(
+    competing_plr ~ smoke_dic + bs(age_0, 3) + sex + education + apoe4 + 
+      as.factor(diabetes_prev) + bs(sbp1, 3) + bs(bmi1, 3) + ht1 + cohort,
+    data = data_long,
+    family = quasibinomial
+  )
+
+death_den_bl %>% broom::tidy(exponentiate = TRUE) %>% View()
+
+data_long$p_denom = predict(death_den_bl, data_long, type = "response")
+
+data_long %<>%
+  group_by(id) %>%
+  mutate(sw_bl = 1/ cumprod(1 - p_denom),
+  ) %>% 
+  ungroup()
+
+data_long <- data_long %>%
+  mutate(sw_bl = ifelse((
+    sw_bl > quantile(sw_bl, 0.99)
+  ), quantile(sw_bl, 0.99), sw_bl))
+
+data_long %>% ggplot(aes(x = as_factor(time), y = sw_bl)) +
+  geom_boxplot()
+
+# T-v weights -------------------------------------------------------------
 
 death_den <-
   glm(
@@ -100,23 +102,14 @@ death_den <-
 
 summary(death_den)
 
-death_den %>% broom::tidy(exponentiate = TRUE) %>% View()
-
-
-death_num <-
-  glm(
-    competing_plr ~ smoke_dic * bs(time, 3) + bs(age_0, 3) + sex + education + apoe4 + cohort,
-    data = data_long,
-    family = binomial
-  )
+# death_den %>% broom::tidy(exponentiate = TRUE) %>% View()
 
 data_long$p_denom = predict(death_den, data_long, type = "response")
 
-data_long$p_num = predict(death_num, data_long, type = "response")
 
 data_long %<>%
   group_by(id) %>%
-  mutate(sw = cumprod(1 - p_num) / cumprod(1 - p_denom),
+  mutate(sw = 1 / cumprod(1 - p_denom),
   ) %>% 
   ungroup()
 
@@ -148,10 +141,9 @@ km_crude_unconditional <-
 risks_km(km_crude_unconditional)
 
 
+# With IPTW, no IPCW ------------------------------------------------------
 
-# With IPCW ---------------------------------------------------------------
-
-km_crude_conditional <-
+km_iptw <-
   survfit(
     Surv(
       time = tstart,
@@ -160,17 +152,42 @@ km_crude_conditional <-
     ) ~ smoke_dic,
     data = data_long,
     cluster = id,
-    weights = sw
+    weights = w_smoke
   )
 
 # km_crude_conditional_plot<- plot_km(km_crude_conditional, "Direct effect") + 
 #   labs(subtitle = "Without IPTW, conditional on time-varying covariates")
 
-risks_km(km_crude_conditional)
+risks_km(km_iptw)
 
-km_crude_conditional %>% broom::tidy() %>% group_by(strata) %>% slice(n())
+km_iptw %>% broom::tidy() %>% group_by(strata) %>% slice(n())
 
-# Adjusted ----------------------------------------------------------------
+# With baseline IPCW ---------------------------------------------------------------
+
+data_long <- 
+  data_long %>% 
+  mutate(both_weights_bl = w_smoke*sw_bl)
+
+km_ipcw_bl <-
+  survfit(
+    Surv(
+      time = tstart,
+      time2 = fuptime,
+      event = outcome_plr
+    ) ~ smoke_dic,
+    data = data_long,
+    cluster = id,
+    weights = both_weights_bl
+  )
+
+# km_crude_conditional_plot<- plot_km(km_crude_conditional, "Direct effect") + 
+#   labs(subtitle = "Without IPTW, conditional on time-varying covariates")
+
+risks_km(km_ipcw_bl)
+
+km_ipcw_bl %>% broom::tidy() %>% group_by(strata) %>% slice(n())
+
+# With t-v IPCW ----------------------------------------------------------------
 
 data_long <- 
   data_long %>% 
@@ -204,20 +221,12 @@ cde_dem <- function(data_long, iptw = FALSE) {
       family = quasibinomial
     )
 
-  death_num <-
-    glm(
-      competing_plr ~ smoke_dic * bs(time, 3) + bs(age_0, 3) + sex + education + apoe4 + cohort,
-      data = data_long,
-      family = quasibinomial
-    )
 
   data_long$p_denom = predict(death_den, data_long, type = "response")
 
-  data_long$p_num = predict(death_num, data_long, type = "response")
-
   data_long %<>%
     group_by(id) %>%
-    mutate(sw = cumprod(1 - p_num) / cumprod(1 - p_denom),
+    mutate(sw = 1 / cumprod(1 - p_denom),
     ) %>%
     ungroup()
 
@@ -232,14 +241,10 @@ cde_dem <- function(data_long, iptw = FALSE) {
           data = data_long,
           family = binomial)
 
-    smoke_num <- glm(smoke_dic ~ 1, data = data_long)
-
     data_long <- data_long %>%
       mutate(
-        pa_num = predict(smoke_num, type = "response"),
         pa_denom = predict(smoke_den, type = "response"),
-        w_smoke = ifelse(smoke_dic == 1, pa_num / pa_denom, (1 - pa_num) /
-                           (1 - pa_denom))
+        w_smoke = ifelse(smoke_dic == 1, 1 / pa_denom, 1/(1 - pa_denom))
       )
 
     data_long %<>%
@@ -273,8 +278,10 @@ cde_dem(data_long, iptw = TRUE)
 
 # Bootstrap ---------------------------------------------------------------
 
-cde_unadjusted <- risks_boot_long(data_long, n = 500, seed = 123, iptw = FALSE)
+# cde_unadjusted <- risks_boot_long(data_long, n = 500, seed = 123, iptw = FALSE)
 
 cde_adjusted <- risks_boot_long(data_long, n = 500, seed = 123, iptw = TRUE)
+
+saveRDS(list(km_adjusted_conditional, cde_adjusted), here::here("02_R", "direct_effects.rds"))
 
 

@@ -4,6 +4,9 @@ library(tidyverse)
 library(here)
 library(magrittr)
 library(zoo)
+library(dplyr)
+library(tidyr)
+
 
 # Import first cohort -----------------------------------------------------
 
@@ -124,7 +127,7 @@ data <- data %>%
   mutate(
     dementia_20 = ifelse(t2dem > 240, 0, dementia),
     death_20 = ifelse(t2death > 240, 0, death_2015))
-    
+
 data <- data %>% 
   mutate(
     t2dem_20 = ifelse(t2dem > 240, 240, t2dem),
@@ -289,8 +292,8 @@ dem_b <- data %>% filter(dementia_20 == 2) %>% pull(id)
 dif_ba <- setdiff(dem_b, dem_a)
 dif_ab <- setdiff(dem_a, dem_b)
 
-data %>% filter(id %in% dif) %>% View()
-
-data_long_dem %>% filter(id %in% dif) %>% View()
+# data %>% filter(id %in% dif) %>% View()
+# 
+# data_long_dem %>% filter(id %in% dif) %>% View()
 
 export(data_long_dem, here::here("01_data", "dementia_long.RData"))

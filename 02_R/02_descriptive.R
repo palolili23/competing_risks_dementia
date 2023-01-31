@@ -75,5 +75,3 @@ table_print <-
   )
 
 mytablestyle(table_print)
-
-#### make counts of incident things

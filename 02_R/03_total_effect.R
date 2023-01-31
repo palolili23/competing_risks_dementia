@@ -1,12 +1,11 @@
 #### Total effect
 library(rio)
-library(lubridate)
+# library(lubridate)
 library(tidyverse)
 library(magrittr)
 library(survival)
-library(WeightIt)
-library(cobalt)
 library(splines)
+library(ggplot2)
 
 ## Import data and functions
 
@@ -15,6 +14,8 @@ source(here::here("02_R", "03b_auxiliary_functions.R"))
 
 data %<>%
   mutate(smoke_dic = ifelse(smoke1 == 1, 1, 0))
+
+data %<>% mutate(education = as_factor(education))
 
 # Weights for smoking --------------------------------------------------
 
@@ -27,59 +28,11 @@ smoke_den <-
 
 summary(smoke_den)
 
-smoke_num <- glm(smoke_dic ~ 1, data = data)
-
-summary(smoke_num)
-
 data <- data %>%
   mutate(
-    p_num = predict(smoke_num, type = "response"),
     p_denom = predict(smoke_den, type = "response"),
-    w_smoke = ifelse(smoke_dic == 1, p_num / p_denom, (1 - p_num) / (1 - p_denom))
+    w_smoke = ifelse(smoke_dic == 1, 1/ p_denom, 1 / (1 - p_denom))
   )
-
-
-## Check standardized mean
-
-w.out1 <-
-  weightit(
-    smoke_dic ~ bs(age_0, 3) + sex + education + apoe4 + cohort,
-    data = data,
-    stabilize = TRUE,
-    estimand = "ATE",
-    method = "ps"
-  )
-
-w.out1
-
-data <- data %>%
-  mutate(ps_w = w.out1$weights)
-
-data %>%
-  ggplot(aes(ps_w, w_smoke, color = smoke_dic)) +
-  geom_point()
-
-summary(data$w_smoke)
-
-# plot_weights <- love.plot(w.out1) +
-#   scale_color_manual(values = c("#011A5E", "#e4a803")) +
-#   labs(title = "Covariate balance for current vs. former smoking") +
-#   theme_bw(base_family = "serif") +
-#   theme(legend.position = "bottom",
-#         legend.text = element_text(size=12)) +
-#   theme(strip.text.x = element_text(size = 11),
-#         # strip.background = element_blank(),
-#         strip.background = element_rect(fill=NA),
-#         axis.text=element_text(size=12),
-#         axis.title=element_text(size=12))
-# 
-# ggsave(filename = "loveplot_smoking.tiff",
-#        plot = plot_weights,
-#        path = here::here("03_figs"),
-#        device = "tiff",
-#        width = 8,
-#        height = 8.1,
-#        dpi = "retina")
 
 
 # 1. Total effect in dementia risk ----------------------------------------------------------
@@ -89,8 +42,6 @@ summary(data$w_smoke)
 
 dem_crude <-
   survfit(Surv(t2dem_20, as.factor(dementia_20)) ~ smoke_dic, data)
-
-model <- dem_crude
 
 risks_cif(dem_crude)
 
@@ -131,13 +82,10 @@ total_effect_dem <- function(data, weight = FALSE){
   if(weight != FALSE){
   smoke_den <- glm(smoke_dic ~ bs(age_0) + sex + education + apoe4 + cohort, data = data, family = binomial)
 
-  smoke_num <- glm(smoke_dic ~ 1, data = data)
-
   data <- data %>%
     mutate(
-      p_num = predict(smoke_num, type = "response"),
       p_denom = predict(smoke_den, type = "response"),
-      w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
+      w_smoke = ifelse(smoke_dic == 1, 1/p_denom, 1/(1- p_denom)))
 
   dem_model <- survfit(Surv(t2dem_20,as.factor(dementia_20)) ~ smoke_dic, data, weights = w_smoke)}
   else{
@@ -168,9 +116,8 @@ total_effect_death <- function(data, weight = FALSE){
 
     data <- data %>%
       mutate(
-        p_num = predict(smoke_num, type = "response"),
         p_denom = predict(smoke_den, type = "response"),
-        w_smoke = ifelse(smoke_dic == 1, p_num/p_denom, (1 - p_num)/(1- p_denom)))
+        w_smoke = ifelse(smoke_dic == 1, 1/p_denom, 1/(1- p_denom)))
 
     death_model <- survfit(Surv(t2death_20,as.factor(death_20)) ~ smoke_dic, data, weights= w_smoke)}
   else{
@@ -185,3 +132,8 @@ total_effect_death <- function(data, weight = FALSE){
 
 ci_death_weight <- risks_boots(data, 500, seed = 123, total_effect_death, weight = TRUE)
 
+saveRDS(ci_dem_weight, here::here("02_R", "ci_dem_weight.rds"))
+saveRDS(ci_death_weight, here::here("02_R", "ci_death_weight.rds"))
+
+total_effects <- list(dem_adjusted, death_adjusted)
+saveRDS(total_effects, here::here("02_R", "total_effects.rds"))

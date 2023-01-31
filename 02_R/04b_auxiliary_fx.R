@@ -64,4 +64,3 @@ risks_boot_long <- function(data_long, n, seed, iptw = FALSE){
   
   return(totalboot)
 }
-

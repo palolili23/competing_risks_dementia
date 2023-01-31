@@ -4,8 +4,6 @@ library(lubridate)
 library(tidyverse)
 library(magrittr)
 library(survival)
-library(WeightIt)
-library(cobalt)
 library(splines)
 
 ## Import data and functions
@@ -79,15 +77,10 @@ cde_dem <- function(data_long, ipcw = FALSE) {
         data = data_long,
         family = binomial)
   
-  smoke_num <- glm(smoke_dic ~ 1, data = data_long)
-  
   data_long <- data_long %>%
     mutate(
-      pa_num = predict(smoke_num, type = "response"),
       pa_denom = predict(smoke_den, type = "response"),
-      w_smoke = ifelse(smoke_dic == 1, pa_num / pa_denom, (1 - pa_num) /
-                         (1 - pa_denom))
-    )
+      w_smoke = ifelse(smoke_dic == 1, 1 / pa_denom, 1/(1 - pa_denom)))
   
   if (ipcw != FALSE) {
     
@@ -99,20 +92,12 @@ cde_dem <- function(data_long, ipcw = FALSE) {
         family = quasibinomial
       )
     
-    death_num_bl <-
-      glm(
-        competing_plr ~ 1,
-        data = data_long,
-        family = binomial
-      )
-    
     data_long$p_denom = predict(death_den_bl, data_long, type = "response")
-    
-    data_long$p_num = predict(death_num_bl, data_long, type = "response")
+
     
     data_long %<>%
       group_by(id) %>%
-      mutate(sw_bl = cumprod(1 - p_num) / cumprod(1 - p_denom),
+      mutate(sw_bl = 1 / cumprod(1 - p_denom),
       ) %>% 
       ungroup()
     
