@@ -1,3 +1,13 @@
+# figure_data <- list(dem_adjusted, death_adjusted, km_adjusted_conditional)
+# saveRDS(figure_data, here::here("02_R", "figs.rds"))
+
+figs <- readRDS(here::here("02_R", "figs.rds"))
+
+
+cif <- figs[[1]]
+death <- figs[[2]]
+km <- figs[[3]]
+
 ####
 
 bind_all_models <- function(cif, death, km) {
@@ -26,7 +36,7 @@ bind_all_models <- function(cif, death, km) {
              (strata == "Continued smoking" &
                 time %in% c(seq(0, 240, 12)))) %>%
     mutate(time = row_number() - 1,
-           model = "A. Total effect on dementia risk") %>% ungroup()
+           model = "A)") %>% ungroup()
 
   tidy_death <- death %>%
     broom::tidy() %>%
@@ -45,7 +55,7 @@ bind_all_models <- function(cif, death, km) {
              (strata == "Continued smoking" &
                 time %in% c(seq(0, 240, 12)))) %>%
     mutate(time = row_number() - 1,
-           model = "C. Effect on mortality") %>% ungroup()
+           model = "C)") %>% ungroup()
   
   tidy_km <- km %>%
     broom::tidy() %>%
@@ -61,92 +71,170 @@ bind_all_models <- function(cif, death, km) {
     mutate(
       strata = ifelse(strata == "smoke_dic=1",
                       "Quit smoking", "Continued smoking")) %>% 
-    mutate(model = "B. Direct effect on dementia risk")
+    mutate(model = "B)")
   
   output <- bind_rows(tidy_cif, tidy_km, tidy_death)
   
   return(output)
 }
 
-
-# all_unadjusted_models ---------------------------------------------------
-
-
-all_models_unadj <- bind_all_models(cif = dem_crude, death = death_crude, 
-                              km_crude_conditional)
-
-plot_unadj <- all_models_unadj %>% 
-  mutate(model = 
-    case_when(
-      model == "A. Total effect on dementia risk" ~ 
-        "A. Dementia risk \n without elimination of death",
-      model == "B. Direct effect on dementia risk" ~ 
-        "B. Dementia risk \n with elimination of death",
-      model == "C. Effect on mortality" ~ 
-        "C. Risk of death",
-    )
-  ) %>% 
-  ggplot(aes(time, cif, group = strata)) +
-  geom_line(aes(color = strata), size = 0.70) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
-  scale_color_manual(values = c("#011A5E", "#e4a803")) +
-  scale_y_continuous(limits = c(0, 0.70)) +
-  facet_wrap(.~model) +
-  labs(
-    color = NULL,
-    y = NULL,
-    x = "Years of follow-up") +
-  theme_bw(base_family = "serif") +
-  theme(legend.position = "bottom",
-        legend.text = element_text(size=12)) +
-  theme(strip.text.x = element_text(size = 11),
-        # strip.background = element_blank(),
-        strip.background = element_rect(fill=NA),
-        axis.text=element_text(size=12),
-        axis.title=element_text(size=12))
-
-ggsave(filename = "plot_unadjusted.tiff",
-       plot = plot_unadj,
-       path = here::here("03_figs"),
-       device = "tiff",
-       width = 8,
-       height = 4.1,
-       dpi = "retina")
-
 # Plots after adjusting for confounding -----------------------------------
 
 all_models <-
-  bind_all_models(cif = dem_adjusted, 
-                  death = death_adjusted,
-                  km = km_adjusted_conditional)
+  bind_all_models(cif = cif, 
+                  death = death,
+                  km = km)
 
-plot_adjusted <- all_models %>% 
+panel <- all_models %>% 
   ggplot(aes(time, cif, group = strata)) +
-  geom_line(aes(color = strata), size = 0.7) +
+  geom_line(aes(linetype = strata), size = 0.8) +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
-  scale_color_manual(values = c("#011A5E", "#e4a803")) +
+  # scale_color_manual(values = c("#011A5E", "#e4a803")) +
   scale_y_continuous(limits = c(0, 0.70)) +
-  facet_wrap(.~model) +
+  facet_wrap(.~model, scales = "free") +
   labs(
-    color = NULL,
-    y = NULL,
-    x = "Years of follow-up") +
-  theme_bw(base_family = "serif") +
-  theme(legend.position = "bottom",
-        legend.text = element_text(size=12)) +
-  theme(strip.text.x = element_text(size = 11),
-        # strip.background = element_blank(),
-        strip.background = element_rect(fill=NA),
+    linetype = "Intervention",
+    y = "Cumulative Incidence",
+    x = "Years of Follow-up") +
+  theme_bw() +
+  theme(legend.text = element_text(size=12),
+        legend.title = element_text(size = 12),
+        strip.text.x = element_text(size = 12, hjust = 0),
+        panel.border = element_blank(),
+        strip.background = element_blank(),
+        axis.line = element_line(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.position = c(0.09,0.85) )
+
+A <- all_models %>% 
+  filter(model == "A)") %>% 
+  ggplot(aes(time, cif, group = strata)) +
+  geom_line(aes(linetype = strata), size = 0.8) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
+  # scale_color_manual(values = c("#011A5E", "#e4a803")) +
+  scale_y_continuous(limits = c(0, 0.70)) +
+  labs(
+    linetype = "Intervention",
+    y = "Cumulative Incidence",
+    x = "Years of Follow-up",
+    title = "A)") +
+  theme_bw() +
+  theme(legend.text = element_text(size=12),
+        legend.title = element_text(size = 12),
+        strip.text.x = element_text(size = 12, hjust = 0),
+        panel.border = element_blank(),
+        strip.background = element_blank(),
+        axis.line = element_line(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=12),
+        legend.position = c(0.3,0.85) )
+
+A
+
+B <- all_models %>% 
+  filter(model == "B)") %>% 
+  ggplot(aes(time, cif, group = strata)) +
+  geom_line(aes(linetype = strata), size = 0.8) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
+  # scale_color_manual(values = c("#011A5E", "#e4a803")) +
+  scale_y_continuous(limits = c(0, 0.70)) +
+  labs(
+    linetype = NULL,
+    y = "Cumulative Incidence",
+    x = "Years of Follow-up",
+    title = "B") +
+  theme_bw() +
+  theme(legend.position = "none",
+        strip.text.x = element_text(size = 12, hjust = 0),
+        panel.border = element_blank(),
+        strip.background = element_blank(),
+        axis.line = element_line(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
         axis.text=element_text(size=12),
         axis.title=element_text(size=12))
+B
 
-ggsave(filename = "plot_adjusted.tiff",
-       plot = plot_adjusted,
+C <- all_models %>% 
+  filter(model == "C)") %>% 
+  ggplot(aes(time, cif, group = strata)) +
+  geom_line(aes(linetype = strata), size = 0.8) +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
+  # scale_color_manual(values = c("#011A5E", "#e4a803")) +
+  scale_y_continuous(limits = c(0, 0.70)) +
+  labs(
+    linetype = NULL,
+    y = "Cumulative Incidence",
+    x = "Years of Follow-up",
+    title = "C)") +
+  theme_bw() +
+  theme(legend.position = "none",
+        strip.text.x = element_text(size = 12, hjust = 0),
+        panel.border = element_blank(),
+        strip.background = element_blank(),
+        axis.line = element_line(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=12))
+C
+
+
+ggsave(filename = "A.pdf",
+       plot = A,
+       path = here::here("03_figs"),
+       device = "pdf",
+       dpi = "retina")
+
+ggsave(filename = "A.tiff",
+       plot = A,
        path = here::here("03_figs"),
        device = "tiff",
-       width = 8,
+       dpi = "retina")
+
+ggsave(filename = "B.tiff",
+       plot = B,
+       path = here::here("03_figs"),
+       device = "tiff",
+       dpi = "retina")
+
+ggsave(filename = "B.pdf",
+       plot = B,
+       path = here::here("03_figs"),
+       device = "pdf",
+       dpi = "retina")
+
+
+ggsave(filename = "C.tiff",
+       plot = C,
+       path = here::here("03_figs"),
+       device = "tiff",
+       dpi = "retina")
+
+ggsave(filename = "C.pdf",
+       plot = C,
+       path = here::here("03_figs"),
+       device = "pdf",
+       dpi = "retina")
+
+ggsave(filename = "panel.tiff",
+       plot = panel,
+       path = here::here("03_figs"),
+       device = "tiff",
+       width = 9,
+       height = 4.1,
+       dpi = "retina")
+ggsave(filename = "panel.pdf",
+       plot = panel,
+       path = here::here("03_figs"),
+       device = "pdf",
+       width = 9,
        height = 4.1,
        dpi = "retina")
 
-plot_unadj
-plot_adjusted
+
