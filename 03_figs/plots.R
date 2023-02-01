@@ -1,6 +1,10 @@
 # figure_data <- list(dem_adjusted, death_adjusted, km_adjusted_conditional)
 # saveRDS(figure_data, here::here("02_R", "figs.rds"))
 
+library(tidyverse)
+library(cowplot)
+
+
 figs <- readRDS(here::here("02_R", "figs.rds"))
 
 
@@ -8,7 +12,9 @@ cif <- figs[[1]]
 death <- figs[[2]]
 km <- figs[[3]]
 
-####
+
+# Extract data from all models because I first planned a facet_wrap -------
+
 
 bind_all_models <- function(cif, death, km) {
   tidy_cif <- cif %>%
@@ -78,36 +84,35 @@ bind_all_models <- function(cif, death, km) {
   return(output)
 }
 
-# Plots after adjusting for confounding -----------------------------------
 
 all_models <-
   bind_all_models(cif = cif, 
                   death = death,
                   km = km)
+# Plots  -----------------------------------
 
-panel <- all_models %>% 
-  ggplot(aes(time, cif, group = strata)) +
-  geom_line(aes(linetype = strata), size = 0.8) +
-  geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
-  # scale_color_manual(values = c("#011A5E", "#e4a803")) +
-  scale_y_continuous(limits = c(0, 0.70)) +
-  facet_wrap(.~model, scales = "free") +
-  labs(
-    linetype = "Intervention",
-    y = "Cumulative Incidence",
-    x = "Years of Follow-up") +
-  theme_bw() +
-  theme(legend.text = element_text(size=12),
-        legend.title = element_text(size = 12),
-        strip.text.x = element_text(size = 12, hjust = 0),
-        panel.border = element_blank(),
-        strip.background = element_blank(),
-        axis.line = element_line(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text=element_text(size=12),
-        axis.title=element_text(size=12),
-        legend.position = c(0.09,0.85) )
+# all_fig <- all_models %>% 
+#   ggplot(aes(time, cif, group = strata)) +
+#   geom_line(aes(linetype = strata), size = 0.8) +
+#   geom_ribbon(aes(ymin = conf.low, ymax = conf.high) ,alpha = 0.2) +
+#   # scale_color_manual(values = c("#011A5E", "#e4a803")) +
+#   scale_y_continuous(limits = c(0, 0.70)) +
+#   facet_wrap(.~model, scales = "free") +
+#   labs(
+#     linetype = "Intervention",
+#     y = "Cumulative Incidence",
+#     x = "Years of Follow-up") +
+#   theme_bw() +
+#   theme(legend.text = element_text(size=12),
+#         legend.title = element_text(size = 12),
+#         strip.text.x = element_text(size = 12, hjust = 0),
+#         panel.border = element_blank(),
+#         strip.background = element_blank(),
+#         axis.line = element_line(),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         axis.text=element_text(size=12),
+#         axis.title=element_text(size=12))
 
 A <- all_models %>% 
   filter(model == "A)") %>% 
@@ -131,10 +136,11 @@ A <- all_models %>%
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         axis.text=element_text(size=12),
-        axis.title=element_text(size=12),
-        legend.position = c(0.3,0.85) )
+        axis.title=element_text(size=12))
 
-A
+A2 <- A +
+  theme(legend.position = c(0.5, 0.85))
+
 
 B <- all_models %>% 
   filter(model == "B)") %>% 
@@ -147,10 +153,10 @@ B <- all_models %>%
     linetype = NULL,
     y = "Cumulative Incidence",
     x = "Years of Follow-up",
-    title = "B") +
+    title = "B)") +
   theme_bw() +
   theme(legend.position = "none",
-        strip.text.x = element_text(size = 12, hjust = 0),
+    strip.text.x = element_text(size = 12, hjust = 0),
         panel.border = element_blank(),
         strip.background = element_blank(),
         axis.line = element_line(),
@@ -184,57 +190,91 @@ C <- all_models %>%
         axis.title=element_text(size=12))
 C
 
+panel <- plot_grid(
+  A + theme(legend.position = c(0.5,0.85)),
+  B + theme(legend.position="none"),
+  C + theme(legend.position="none"),
+  align = 'vh',
+  hjust = -1,
+  nrow = 1
+)
 
-ggsave(filename = "A.pdf",
-       plot = A,
-       path = here::here("03_figs"),
-       device = "pdf",
-       dpi = "retina")
-
-ggsave(filename = "A.tiff",
-       plot = A,
-       path = here::here("03_figs"),
-       device = "tiff",
-       dpi = "retina")
-
-ggsave(filename = "B.tiff",
-       plot = B,
-       path = here::here("03_figs"),
-       device = "tiff",
-       dpi = "retina")
-
-ggsave(filename = "B.pdf",
-       plot = B,
-       path = here::here("03_figs"),
-       device = "pdf",
-       dpi = "retina")
+panel
 
 
-ggsave(filename = "C.tiff",
-       plot = C,
-       path = here::here("03_figs"),
-       device = "tiff",
-       dpi = "retina")
-
-ggsave(filename = "C.pdf",
-       plot = C,
-       path = here::here("03_figs"),
-       device = "pdf",
-       dpi = "retina")
+# Save panel --------------------------------------------------------------
 
 ggsave(filename = "panel.tiff",
        plot = panel,
        path = here::here("03_figs"),
        device = "tiff",
        width = 9,
-       height = 4.1,
+       height = 3.6,
+       unit = "in",
        dpi = "retina")
 ggsave(filename = "panel.pdf",
        plot = panel,
        path = here::here("03_figs"),
        device = "pdf",
        width = 9,
-       height = 4.1,
+       height = 3.6,
        dpi = "retina")
 
 
+# Save A ------------------------------------------------------------------
+
+ggsave(filename = "A.tiff",
+       plot = A2,
+       path = here::here("03_figs"),
+       device = "tiff",
+       width = 3,
+       height = 3.6,
+       unit = "in",
+       dpi = "retina")
+ggsave(filename = "A.pdf",
+       plot = A2,
+       path = here::here("03_figs"),
+       device = "pdf",
+       width = 3,
+       height = 3.6,
+       dpi = "retina")
+
+
+# Save B ------------------------------------------------------------------
+
+ggsave(filename = "B.tiff",
+       plot = B,
+       path = here::here("03_figs"),
+       device = "tiff",
+       width = 3,
+       height = 3.6,
+       unit = "in",
+       dpi = "retina")
+
+ggsave(filename = "B.pdf",
+       plot = B,
+       path = here::here("03_figs"),
+       device = "pdf",
+       width = 3,
+       height = 3.6,
+       dpi = "retina")
+
+
+# Save C ------------------------------------------------------------------
+
+ggsave(filename = "C.tiff",
+       plot = C,
+       path = here::here("03_figs"),
+       device = "tiff",
+       width = 3,
+       height = 3.6,
+       unit = "in",
+       dpi = "retina")
+
+ggsave(filename = "C.pdf",
+       plot = C,
+       path = here::here("03_figs"),
+       device = "pdf",
+       width = 3,
+       height = 3.6,
+       dpi = "retina")
